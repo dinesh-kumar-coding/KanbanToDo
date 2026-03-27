@@ -1,0 +1,144 @@
+                                                                           HTML5
+
+- <script src="script.js" defer></script>    <!-- DEFER --> 
+defer guarantee that when our KanbanApp class finally runs,
+ all of our HTML elements (#list-todo, #task-modal, etc.) 
+ actually exist in the DOM ready to be manipulated.
+
+1. aria-live="polite" & aria-atomic="true"
+Context: The hidden div at the top of the page.
+
+Explanation: As we discussed, aria-live="polite" is the invisible megaphone for screen readers, waiting politely to announce dynamic changes. But what about aria-atomic="true"?
+
+Analogy: Imagine the megaphone is reading a sentence: "Task 1 moved to Done." If we only change the word "Done" to "To Do", a screen reader might just randomly shout: "To Do!" out of nowhere. aria-atomic="true" forces the screen reader to read the entire sentence (the whole atom/unit) every time it changes, so it makes sense: "Task 1 moved to To Do."
+
+2. The data-* Attributes (data-status="todo")
+Context: On our column <section> tags.
+
+Explanation: data- attributes are like secret backpacks you can put on any HTML element. The browser completely ignores them, but JavaScript loves them.
+
+Why we need it: When a user drags a task card and drops it into a column, our JavaScript needs to know which column it landed in. JS reaches into the section's backpack, sees data-status="todo", and says, "Ah! Update this task to 'todo' in our database!"
+
+3. role="list"
+Context: On the <div> holding our tasks.
+
+Explanation: Normally, if you want a list, you use <ul> or <ol>. However, sometimes CSS Flexbox/Grid layouts behave better when we just use a <div>. But if we use a <div>, the screen reader doesn't know it's a list. By adding role="list", we are putting a disguise on the <div>. We tell the screen reader: "Treat this exact <div> as if it were a <ul>."
+
+4. The Native <dialog> Element
+Context: Our "New Task" popup.
+
+Explanation: For over a decade, developers built popups by putting a <div> in the middle of the screen and using insane amounts of CSS and JS to make it work. HTML5 finally gave us <dialog>.
+
+Superpowers: When you open a <dialog> using JavaScript's .showModal() method, it automatically:
+
+Floats on top of everything else (no z-index wars).
+
+Creates a background dimming effect (the backdrop).
+
+Traps Focus: If you hit the Tab key on your keyboard, you cannot accidentally highlight elements behind the popup. It keeps you locked inside until you close it.
+
+5. The <template> Tag
+Context: The task card code sitting at the very bottom of the page.
+
+Explanation: The <template> tag is an invisible blueprint.
+
+Why we need it: If you put HTML inside a <template>, the browser will not render it on the screen. It is completely hidden. However, when we click "Add Task", our JavaScript grabs this blueprint, makes a photocopy of it, fills in the title and description, and stamps it onto the screen. This saves us from having to write messy HTML inside our JavaScript file.
+
+6. tabindex="0" draggable="true" aria-grabbed="false"
+Context: Placed on the <article> tag inside our template (the individual task cards).
+
+Explanation: * tabindex="0": Normally, you can only use the Tab key to navigate to links (<a>) and buttons. tabindex="0" makes a standard <article> focusable by the keyboard, making our app accessible to users without a mouse.
+
+draggable="true": This is the magic switch for the HTML5 Drag and Drop API. It tells the browser, "Allow the user to click, hold, and drag this element around the screen."
+
+aria-grabbed="false": This tells a screen reader whether the item is currently being held/dragged by the user or sitting safely in a column. 
+
+
+
+
+
+                                                                             CSS
+
+📝 Short Notes: CSS Variables & Theming
+What are they? CSS Variables (like --bg-main) let you save a value (like a color or spacing) under a memorable name, just like saving a phone contact.
+
+The :root Selector: This is the "master settings menu." Storing variables here makes them global, meaning any element on your website can use them by calling var(--bg-main).
+
+The Superpower (Single Source of Truth): If your boss wants to change the app's primary blue color, you only change it in the :root. Every button and link using that variable updates instantly.
+
+Dark Mode Magic ([data-theme="dark"]): To create a dark theme, we just redefine those exact same variable names with dark colors. When our JavaScript adds data-theme="dark" to the HTML, the browser automatically swaps out the entire color palette at once. No extra classes needed!
+
+
+📝 Short Notes: The Universal Reset
+The Wildcard (*, *::before, *::after): This selects literally every single HTML element and pseudo-element on the page.
+
+The Clean Slate (margin: 0; padding: 0;): Browsers secretly add their own default spacing to things like headings and the body. This wipes it all to zero so you have 100% control over your layout and it looks identical in Chrome, Safari, and Firefox.
+
+The Layout Saver (box-sizing: border-box;): By default, if you make a box 100px wide, but add 20px of padding, the box grows to 140px and breaks your layout. border-box forces the browser to absorb the padding inside the box. If you say it's 100px wide, it stays exactly 100px wide, no matter what.
+
+📝 Short Notes: UI Polish, Smooth UX, & CSS Inheritance
+scroll-behavior: smooth: Makes jumping between sections of a page a smooth glide instead of a harsh teleport.
+
+transition: The "dimmer switch." Animates CSS changes (like hover effects or dark mode) over a specified amount of time so they fade smoothly.
+
+-webkit / -moz Font Smoothing: Browser-specific prefixes that polish the jagged pixel edges of text, making typography look crisp and high-end.
+
+inherit: Forces stubborn elements (like buttons and inputs) to stop using default browser styles and copy the exact font and color of their parent elements.
+
+📝 Short Notes: Interactive States
+button:disabled: A CSS rule that automatically styles any button that has been turned off (either in HTML or via JavaScript). We use it to fade the button out (opacity) and change the mouse pointer (cursor: not-allowed) so the user knows it is unclickable.
+
+📝 Short Notes: Accessibility & Components
+:focus-visible: The "smart spotlight." It shows a visible outline only for users navigating via keyboard, keeping the UI clean for mouse users while preserving accessibility.
+
+.sr-only (Screen Reader Only): The "invisibility cloak." A specific combination of properties (like clip and width: 1px) that visually hides an element from the screen without deleting it from screen readers. Never use display: none for screen reader text!
+
+clip: rect(0,0,0,0): Visually crops an element down to zero pixels.
+
+white-space: nowrap: Forces text to stay on a single line, preventing it from wrapping and breaking layouts.
+
+background-color: transparent;: The "Glass Window." It removes any solid background color from an element, allowing the colors or images behind it to perfectly show through. Often used for "Ghost Buttons" (secondary actions) so they don't distract from the main primary buttons.
+
+📝 Short Notes: Layouts & 3D Space
+z-index: Controls the stacking order. Higher numbers float above lower numbers.
+
+box-shadow: Creates depth by adding drop shadows. Great for making elements feel clickable.
+
+overflow-x / overflow-y: Controls what happens when content is too big for its box. hidden chops it off; auto creates a scrollbar.
+
+min-height / max-height: Sets hard boundaries. Useful for preventing empty elements from collapsing (min-height) or forcing long lists to scroll (max-height).
+
+transform: translateY(): Visually moves an element up (negative value) or down (positive value) without disturbing the surrounding layout.
+
+📝 Short Notes: Flexbox (Micro-Layouts)
+display: flex: Turns a container into a flexible row (or column), making aligning children incredibly easy.
+
+justify-content: Aligns items along the main axis (e.g., space-between pushes items to opposite edges).
+
+align-items: Aligns items along the cross axis (e.g., center perfectly centers items vertically).
+
+flex-direction: column: Flips the Flexbox from a left-to-right row into a top-to-bottom stack.
+
+gap: Adds perfectly even spacing between flex items without adding extra margins to the outside edges.
+
+flex: 1: Tells a specific item to grow and greedily fill all remaining available space in the container.
+
+📝 Short Notes: Layouts & 3D Space
+z-index: Controls the stacking order. Higher numbers float above lower numbers.
+
+box-shadow: Creates depth by adding drop shadows. Great for making elements feel clickable.
+
+overflow-x / overflow-y: Controls what happens when content is too big for its box. hidden chops it off; auto creates a scrollbar.
+
+min-height / max-height: Sets hard boundaries. Useful for preventing empty elements from collapsing (min-height) or forcing long lists to scroll (max-height).
+
+transform: translateY(): Visually moves an element up (negative value) or down (positive value) without disturbing the surrounding layout.
+
+📝 Short Notes: Text Formatting & Animations
+transform: scale(): Shrinks (values < 1) or enlarges (values > 1) an element.
+
+word-break: break-word: Forces impossibly long words to break onto the next line instead of spilling out of their container.
+
+-webkit-line-clamp: A magic CSS combo that truncates long text after a specific number of lines and adds an ellipsis (...).
+
+@keyframes & animation: @keyframes acts as a step-by-step script for an animation (using from and to, or percentages). The animation property applies that script to an element, controlling its speed and behavior.

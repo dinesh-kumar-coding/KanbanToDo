@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pro Kanban Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <div id="a11y-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>  <!-- aria-live="polite" aria-atomic="true" -->
+
+    <header class="app-header">
+        <div class="header-content">
+            <h1>Kanban Pro</h1>
+            <div class="header-controls">
+                <button id="theme-toggle" aria-label="Toggle dark mode">
+                    <!-- aria-label="Toggle dark mode" aria-hidden="true" aria-haspopup="dialog" aria-controls="task-modal" aria-labelledby="todo-heading" -->
+                    <span class="theme-icon" aria-hidden="true">🌗</span>
+                </button>
+                <button id="add-task-btn" class="btn-primary" aria-haspopup="dialog" aria-controls="task-modal">
+                    + New Task
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="board-container">
+        <section class="kanban-column" aria-labelledby="todo-heading" data-status="todo"> <!-- data-status -->
+            <header class="column-header">
+                <h2 id="todo-heading">To Do</h2>
+                <span class="task-count" aria-label="0 tasks in To Do">0</span>
+            </header>
+            <div class="task-list" id="list-todo" role="list">  <!-- role -->
+                </div>
+        </section>
+
+        <section class="kanban-column" aria-labelledby="inprogress-heading" data-status="inprogress">
+            <header class="column-header">
+                <h2 id="inprogress-heading">In Progress</h2>
+                <span class="task-count" aria-label="0 tasks in In Progress">0</span>
+            </header>
+            <div class="task-list" id="list-inprogress" role="list">
+                </div>
+        </section>
+
+        <section class="kanban-column" aria-labelledby="done-heading" data-status="done">
+            <header class="column-header">
+                <h2 id="done-heading">Done</h2>
+                <span class="task-count" aria-label="0 tasks in Done">0</span>
+            </header>
+            <div class="task-list" id="list-done" role="list">
+                </div>
+        </section>
+    </main>
+
+    <footer class="app-footer">
+        <p>Pro-Level Kanban Dashboard &copy; 2026</p>
+    </footer>
+
+    <dialog id="task-modal" aria-labelledby="modal-title">  <!-- <dialog></dialog> -->
+        <div class="modal-content">
+            <header class="modal-header">
+                <h2 id="modal-title">Create New Task</h2>
+                <button id="close-modal-btn" aria-label="Close modal" title="Close modal">✕</button>
+            </header>
+            <form id="task-form">
+                <div class="form-group">
+                    <label for="task-title">Task Title <span class="required" aria-hidden="true">*</span></label>
+                    <input type="text" id="task-title" name="title" required aria-required="true" placeholder="E.g., Design database schema">
+                </div>
+                
+                <div class="form-group">
+                    <label for="task-desc">Description</label>
+                    <textarea id="task-desc" name="description" rows="3" placeholder="Add task details here..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="task-priority">Priority</label>
+                    <select id="task-priority" name="priority">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+
+                <footer class="modal-actions">
+                    <button type="button" id="cancel-task-btn" class="btn-secondary">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Task</button>
+                </footer>
+            </form>
+        </div>
+    </dialog>
+
+    <template id="task-template">  <!-- <template></template> -->
+        <article class="task-card" role="listitem" tabindex="0" draggable="true" aria-grabbed="false">  <!-- tabindex="0" draggable="true" aria-grabbed="false" -->
+            <header class="task-card-header">
+                <span class="task-priority-badge"></span>
+                <div class="task-actions">
+                    <button class="btn-icon delete-task" aria-label="Delete task" title="Delete task">🗑️</button>
+                </div>
+            </header>
+            <h3 class="task-title"></h3>
+            <p class="task-description"></p>
+            <footer class="task-card-footer">
+                <span class="task-timestamp"></span>
+            </footer>
+        </article>
+    </template>
+
+</body>
+</html>

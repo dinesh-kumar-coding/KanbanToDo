@@ -1,0 +1,480 @@
+/* =========================================
+   PHASE 2: CSS ARCHITECTURE & THEMING
+   ========================================= */
+
+/* --- 1. CSS Custom Properties (Design Tokens) --- */
+:root {
+    /* Color Palette - Light Mode (Default) */
+    --bg-main: #f4f5f7;
+    --bg-surface: #ffffff;
+    --bg-column: #ebecf0;
+    --text-primary: #172b4d;
+    --text-secondary: #5e6c84;
+    --border-color: #dfe1e6;
+    
+    /* Interactive Accents */
+    --accent-primary: #0052cc;
+    --accent-primary-hover: #0065ff;
+    --danger: #ef4444;
+    --danger-hover: #dc2626;
+    
+    /* Task Priority Colors */
+    --priority-low: #10b981;
+    --priority-medium: #f59e0b;
+    --priority-high: #ef4444;
+    
+    /* Typography */
+    --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    --text-sm: 0.875rem;
+    --text-base: 1rem;
+    --text-lg: 1.25rem;
+    --text-xl: 1.5rem;
+    
+    /* Spacing & Layout */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    
+    /* Effects & Transitions */
+    --shadow-sm: 0 1px 2px rgba(9, 30, 66, 0.25);
+    --shadow-md: 0 4px 8px rgba(9, 30, 66, 0.13);
+    --shadow-modal: 0 10px 25px rgba(0, 0, 0, 0.2);
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.3s ease;
+}
+
+/* Dark Mode Theme Overrides */
+[data-theme="dark"] {
+    --bg-main: #1d2125;
+    --bg-surface: #22272b;
+    --bg-column: #161a1d;
+    --text-primary: #b6c2cf;
+    --text-secondary: #8c9bab;
+    --border-color: #a6c5e229;
+    
+    --accent-primary: #579dff;
+    --accent-primary-hover: #85b8ff;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* --- 2. Modern CSS Reset --- */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font-sans);
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    line-height: 1.5;
+    transition: background-color var(--transition-normal), color var(--transition-normal);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- 3. Base Typography & Form Elements --- */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-primary);
+    line-height: 1.2;
+    font-weight: 600;
+}
+
+p {
+    color: var(--text-secondary);
+}
+
+/* Inherit font styles for inputs to avoid browser defaults */
+button, input, textarea, select {
+    font: inherit;
+    color: inherit;
+}
+
+button {
+    cursor: pointer;
+    border: none;
+    background: none;
+    transition: all var(--transition-fast);
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* --- 4. Accessibility & Global Utilities --- */
+
+/* Highly visible focus state for keyboard navigation */
+:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+/* Hide elements visually but keep them available to screen readers */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* Base UI Components */
+.btn-primary {
+    background-color: var(--accent-primary);
+    color: #ffffff;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+}
+
+.btn-primary:hover {
+    background-color: var(--accent-primary-hover);
+}
+
+.btn-secondary {
+    background-color: transparent;
+    color: var(--text-primary);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    background-color: var(--bg-column);
+}
+
+/* Theme Toggle Button Specifics */
+#theme-toggle {
+    font-size: 1.5rem;
+    padding: var(--space-xs);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#theme-toggle:hover {
+    background-color: var(--bg-column);
+}
+
+/* =========================================
+   PHASE 3: CSS LAYOUTS & ANIMATIONS
+   ========================================= */
+
+/* --- 1. Macro Layout (Header, Main, Footer) --- */
+.app-header {
+    background-color: var(--bg-surface);
+    border-bottom: 1px solid var(--border-color);
+    padding: var(--space-md) var(--space-xl);
+    box-shadow: var(--shadow-sm);
+    z-index: 10;
+}
+
+.header-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.app-footer {
+    text-align: center;
+    padding: var(--space-md);
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    border-top: 1px solid var(--border-color);
+    background-color: var(--bg-surface);
+}
+
+/* --- 2. Kanban Board Grid --- */
+.board-container {
+    flex: 1; /* Pushes footer to the bottom */
+    padding: var(--space-xl);
+    display: grid;
+    /* Creates a horizontally scrolling grid for columns */
+    grid-auto-columns: minmax(320px, 1fr);
+    grid-auto-flow: column;
+    gap: var(--space-xl);
+    overflow-x: auto;
+    overflow-y: hidden;
+    align-items: start; /* Prevents columns from stretching vertically by default */
+}
+
+/* --- 3. Column Layout (Flexbox) --- */
+.kanban-column {
+    background-color: var(--bg-column);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 180px); /* Keeps column headers visible while lists scroll */
+    border: 2px solid transparent;
+    transition: border-color var(--transition-normal);
+}
+
+/* State class applied via JS when dragging over a column */
+.kanban-column.drag-over {
+    border-color: var(--accent-primary);
+    background-color: var(--border-color); /* Slight darken effect */
+}
+
+.column-header {
+    padding: var(--space-md);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.column-header h2 {
+    font-size: var(--text-lg);
+    font-weight: 600;
+}
+
+.task-count {
+    background-color: var(--border-color);
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.task-list {
+    padding: var(--space-md);
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    min-height: 50px; /* Ensures empty columns are still droppable targets */
+}
+
+/* --- 4. Task Card Layout --- */
+.task-card {
+    background-color: var(--bg-surface);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    box-shadow: var(--shadow-sm);
+    cursor: grab;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    border: 1px solid var(--border-color);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    position: relative;
+}
+
+.task-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.task-card:active {
+    cursor: grabbing;
+}
+
+/* State class applied via JS when a card is being dragged */
+.task-card.is-dragging {
+    opacity: 0.4;
+    transform: scale(0.95);
+    box-shadow: none;
+}
+
+.task-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.task-priority-badge {
+    width: 40px;
+    height: 6px;
+    border-radius: 3px;
+    display: inline-block;
+}
+
+/* Priority Color Modifiers */
+.priority-low { background-color: var(--priority-low); }
+.priority-medium { background-color: var(--priority-medium); }
+.priority-high { background-color: var(--priority-high); }
+
+.task-title {
+    font-size: var(--text-base);
+    color: var(--text-primary);
+    word-break: break-word;
+}
+
+.task-description {
+    font-size: var(--text-sm);
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Truncates long descriptions after 2 lines */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.task-card-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: var(--space-xs);
+}
+
+.task-timestamp {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.btn-icon {
+    font-size: 1rem;
+    opacity: 0; /* Hidden by default, shown on card hover */
+    padding: 2px;
+}
+
+.task-card:hover .btn-icon,
+.task-card:focus-within .btn-icon {
+    opacity: 1; /* Accessibility: visible on hover or keyboard focus */
+}
+
+.delete-task:hover {
+    color: var(--danger);
+}
+
+/* --- 5. Modal & Form Styles (Native Dialog) --- */
+#task-modal {
+    margin: auto;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-lg);
+    background-color: var(--bg-surface);
+    box-shadow: var(--shadow-modal);
+    width: 100%;
+    max-width: 500px;
+}
+
+/* The native backdrop for <dialog> elements */
+#task-modal::backdrop {
+    background-color: rgba(9, 30, 66, 0.54);
+    backdrop-filter: blur(3px); /* Modern blur effect */
+}
+
+/* Animation for the modal opening */
+#task-modal[open] {
+    animation: modalSlideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes modalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    padding: var(--space-lg);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#close-modal-btn {
+    background-color: transparent;
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#close-modal-btn:hover {
+    background-color: var(--bg-column);
+    color: var(--text-primary);
+}
+
+#task-form {
+    padding: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.form-group label {
+    font-weight: 500;
+    font-size: var(--text-sm);
+    color: var(--text-primary);
+}
+
+.form-group .required {
+    color: var(--danger);
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    transition: border-color var(--transition-fast);
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.2);
+}
+
+.modal-actions {
+    margin-top: var(--space-md);
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-md);
+}
