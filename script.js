@@ -1,98 +1,117 @@
 /**
  * =========================================
  * KANBAN PRO - CORE APPLICATION
- * Final Build: State, Events, A11y, Storage & Async Drag-and-Drop
  * =========================================
  */
 
 class KanbanApp {
     constructor() {
-        // --- 1. Boot up sequence & DOM Caching ---
         if (!this.cacheDOM()) {
             console.error('KanbanApp Initialization Failed: Missing critical DOM elements.');
-            return; 
+            return;
         }
-        
-        // --- 2. State Initialization (Web Storage API) ---
-        this.tasks = this.loadState(); 
-        this.draggedTaskEl = null; // Reference to the currently dragged DOM element
-        
-        // --- 3. Run Systems ---
+
+        this.tasks = this.loadState();
+        this.draggedTaskEl = null;
+        this.pendingDeleteId = null; // Tracks which card is awaiting inline delete confirmation
+
         this.initTheme();
         this.initEventListeners();
         this.render();
     }
 
-    /**
-     * --- DOM CACHING & VALIDATION ---
-     */
+    // ─────────────────────────────────────────
+    // DOM CACHING & VALIDATION
+    // ─────────────────────────────────────────
     cacheDOM() {
         this.board = {
-            todo: document.getElementById('list-todo'),
+            todo:       document.getElementById('list-todo'),
             inprogress: document.getElementById('list-inprogress'),
-            done: document.getElementById('list-done')
+            done:       document.getElementById('list-done')
         };
-        
-        this.counters = {
-            todo: document.querySelector('[data-status="todo"] .task-count'),
-            inprogress: document.querySelector('[data-status="inprogress"] .task-count'),
-            done: document.querySelector('[data-status="done"] .task-count')
-        };
-        
-        this.template = document.getElementById('task-template');
-        this.announcer = document.getElementById('a11y-announcer');
-        this.boardContainer = document.querySelector('.board-container');
-        
-        this.themeToggleBtn = document.getElementById('theme-toggle');
-        this.htmlEl = document.documentElement;
 
-        this.addTaskBtn = document.getElementById('add-task-btn');
-        this.taskModal = document.getElementById('task-modal');
-        this.closeModalBtn = document.getElementById('close-modal-btn');
-        this.cancelTaskBtn = document.getElementById('cancel-task-btn');
-        this.taskForm = document.getElementById('task-form');
+        this.counters = {
+            todo:       document.querySelector('[data-status="todo"] .task-count'),
+            inprogress: document.querySelector('[data-status="inprogress"] .task-count'),
+            done:       document.querySelector('[data-status="done"] .task-count')
+        };
+
+        this.template        = document.getElementById('task-template');
+        this.announcer       = document.getElementById('a11y-announcer');
+        this.boardContainer  = document.querySelector('.board-container');
+        this.themeToggleBtn  = document.getElementById('theme-toggle');
+        this.themeIcon       = document.getElementById('theme-icon');
+        this.htmlEl          = document.documentElement;
+        this.addTaskBtn      = document.getElementById('add-task-btn');
+        this.taskModal       = document.getElementById('task-modal');
+        this.modalBackdrop   = document.getElementById('modal-backdrop');
+        this.closeModalBtn   = document.getElementById('close-modal-btn');
+        this.cancelTaskBtn   = document.getElementById('cancel-task-btn');
+        this.taskForm        = document.getElementById('task-form');
 
         return this.template && this.taskModal && this.board.todo;
     }
 
-    /**
-     * --- EVENT LISTENERS ---
-     */
+    // ─────────────────────────────────────────
+    // EVENT LISTENERS
+    // ─────────────────────────────────────────
     initEventListeners() {
-        // Theme & Modals
         this.themeToggleBtn.addEventListener('click', () => this.toggleTheme());
         this.addTaskBtn.addEventListener('click', () => this.openModal());
         this.closeModalBtn.addEventListener('click', () => this.closeModal());
         this.cancelTaskBtn.addEventListener('click', () => this.closeModal());
-        
-        this.taskModal.addEventListener('click', (e) => {
-            const rect = this.taskModal.getBoundingClientRect();
-            if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
-                this.closeModal();
-            }
-        });
+
+        // FIX: Reliable click-outside via dedicated backdrop element (replaces getBoundingClientRect hack)
+        this.modalBackdrop.addEventListener('click', () => this.closeModal());
 
         this.taskForm.addEventListener('submit', (e) => this.handleFormSubmit(e));
         this.boardContainer.addEventListener('click', (e) => this.handleBoardClick(e));
 
-        // HTML5 Drag and Drop API Events (Delegated to Board Container)
-        this.boardContainer.addEventListener('dragstart', (e) => this.handleDragStart(e));
-        this.boardContainer.addEventListener('dragend', (e) => this.handleDragEnd(e));
-        this.boardContainer.addEventListener('dragover', (e) => this.handleDragOver(e));
-        this.boardContainer.addEventListener('dragenter', (e) => this.handleDragEnter(e));
-        this.boardContainer.addEventListener('dragleave', (e) => this.handleDragLeave(e));
-        this.boardContainer.addEventListener('drop', (e) => this.handleDrop(e));
+        // HTML5 Drag and Drop — delegated to board container
+        this.boardContainer.addEventListener('dragstart',  (e) => this.handleDragStart(e));
+        this.boardContainer.addEventListener('dragend',    (e) => this.handleDragEnd(e));
+        this.boardContainer.addEventListener('dragover',   (e) => this.handleDragOver(e));
+        this.boardContainer.addEventListener('dragenter',  (e) => this.handleDragEnter(e));
+        this.boardContainer.addEventListener('dragleave',  (e) => this.handleDragLeave(e));
+        this.boardContainer.addEventListener('drop',       (e) => this.handleDrop(e));
     }
 
-    /**
-     * --- WEB STORAGE API (Persistence) ---
-     */
+    // ─────────────────────────────────────────
+    // THEME  (FIX: persisted to localStorage)
+    // ─────────────────────────────────────────
+    initTheme() {
+        // Prefer saved choice; fall back to OS preference
+        const saved       = localStorage.getItem('kanban-pro-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        this.applyTheme(saved || (prefersDark ? 'dark' : 'light'));
+    }
+
+    toggleTheme() {
+        const current = this.htmlEl.getAttribute('data-theme');
+        this.applyTheme(current === 'dark' ? 'light' : 'dark');
+    }
+
+    // FIX: Single method owns all theme side-effects
+    applyTheme(theme) {
+        this.htmlEl.setAttribute('data-theme', theme);
+        localStorage.setItem('kanban-pro-theme', theme);
+        this.themeIcon.textContent = theme === 'dark' ? '☀️' : '🌗';
+        this.themeToggleBtn.setAttribute(
+            'aria-label',
+            theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
+        );
+        this.announceToScreenReader(`${theme} mode enabled`);
+    }
+
+    // ─────────────────────────────────────────
+    // WEB STORAGE (Persistence)
+    // ─────────────────────────────────────────
     loadState() {
         try {
-            const savedTasks = localStorage.getItem('kanban-pro-tasks');
-            return savedTasks ? JSON.parse(savedTasks) : [];
-        } catch (error) {
-            console.error('Failed to parse tasks from localStorage', error);
+            const saved = localStorage.getItem('kanban-pro-tasks');
+            return saved ? JSON.parse(saved) : [];
+        } catch (e) {
+            console.error('Failed to parse tasks from localStorage', e);
             return [];
         }
     }
@@ -101,9 +120,9 @@ class KanbanApp {
         localStorage.setItem('kanban-pro-tasks', JSON.stringify(this.tasks));
     }
 
-    /**
-     * --- STATE MANAGEMENT ---
-     */
+    // ─────────────────────────────────────────
+    // STATE MANAGEMENT
+    // ─────────────────────────────────────────
     generateId() {
         return `task-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     }
@@ -111,12 +130,13 @@ class KanbanApp {
     addTask(title, description, priority, status = 'todo') {
         const newTask = {
             id: this.generateId(),
-            title: title,
-            description: description,
-            priority: priority,
-            status: status,
-            timestamp: new Date().toLocaleDateString('en-US', { 
-                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+            title,
+            description,
+            priority,
+            status,
+            // FIX: field renamed from 'timestamp' to 'createdAt' for clarity
+            createdAt: new Date().toLocaleDateString('en-US', {
+                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
             })
         };
 
@@ -127,148 +147,130 @@ class KanbanApp {
     }
 
     deleteTask(taskId) {
-        const taskIndex = this.tasks.findIndex(t => t.id === taskId);
-        if (taskIndex > -1) {
-            const taskTitle = this.tasks[taskIndex].title;
-            this.tasks.splice(taskIndex, 1);
+        const idx = this.tasks.findIndex(t => t.id === taskId);
+        if (idx > -1) {
+            const title = this.tasks[idx].title;
+            this.tasks.splice(idx, 1);
+            this.pendingDeleteId = null;
             this.saveState();
             this.render();
-            this.announceToScreenReader(`Task "${taskTitle}" deleted.`);
+            this.announceToScreenReader(`Task "${title}" deleted.`);
         }
     }
 
-    /**
-     * --- ASYNCHRONOUS CLOUD SIMULATION ---
-     */
+    // ─────────────────────────────────────────
+    // ASYNC CLOUD SYNC
+    // FIX: guard against duplicate indicators; styles via CSS class
+    // ─────────────────────────────────────────
     async syncTaskUpdate(taskId, newStatus) {
-        // 1. Create a dynamic syncing indicator UI
-        const syncIndicator = document.createElement('div');
-        syncIndicator.id = 'cloud-sync-indicator';
-        syncIndicator.style.cssText = `
-            position: fixed; bottom: 20px; right: 20px; 
-            background-color: var(--accent-primary); color: #fff; 
-            padding: 10px 20px; border-radius: 50px; 
-            box-shadow: var(--shadow-md); z-index: 1000;
-            display: flex; align-items: center; gap: 10px;
-            font-size: var(--text-sm); font-weight: 500;
-            animation: modalSlideUp 0.3s ease forwards;
-        `;
-        syncIndicator.innerHTML = `<span>☁️ Syncing to cloud...</span>`;
-        document.body.appendChild(syncIndicator);
+        // Remove any existing indicator before creating a new one
+        document.getElementById('cloud-sync-indicator')?.remove();
 
-        // 2. Return a Promise that simulates a network delay
+        const indicator = document.createElement('div');
+        indicator.id = 'cloud-sync-indicator';
+        indicator.innerHTML = `<span>☁️ Syncing to cloud...</span>`;
+        document.body.appendChild(indicator);
+
         return new Promise((resolve) => {
             setTimeout(() => {
-                syncIndicator.innerHTML = `<span>✅ Synced successfully</span>`;
-                syncIndicator.style.backgroundColor = 'var(--priority-low)';
-                
-                // Remove indicator after success message
+                indicator.classList.add('synced');
+                indicator.innerHTML = `<span>✅ Synced successfully</span>`;
+
                 setTimeout(() => {
-                    syncIndicator.remove();
-                    resolve(); // Resolve the promise
+                    indicator.remove();
+                    resolve();
                 }, 1000);
-            }, 800); // 800ms artificial latency
+            }, 800);
         });
     }
 
-    /**
-     * --- DRAG AND DROP HANDLERS ---
-     */
+    // ─────────────────────────────────────────
+    // DRAG AND DROP HANDLERS
+    // ─────────────────────────────────────────
     handleDragStart(e) {
-        const taskCard = e.target.closest('.task-card');
-        if (!taskCard) return;
+        const card = e.target.closest('.task-card');
+        if (!card) return;
 
-        this.draggedTaskEl = taskCard;
+        this.draggedTaskEl = card;
         e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', taskCard.dataset.id);
-        
-        // Use setTimeout to ensure the visual dragging ghost is generated 
-        // before we hide/fade the original element.
-        setTimeout(() => taskCard.classList.add('is-dragging'), 0);
+        e.dataTransfer.setData('text/plain', card.dataset.id);
+
+        // Defer so the drag ghost renders before we fade the original
+        setTimeout(() => card.classList.add('is-dragging'), 0);
     }
 
     handleDragEnd(e) {
         if (!this.draggedTaskEl) return;
         this.draggedTaskEl.classList.remove('is-dragging');
         this.draggedTaskEl = null;
-
-        // Clean up visual states on all columns
         document.querySelectorAll('.kanban-column').forEach(col => col.classList.remove('drag-over'));
     }
 
     handleDragOver(e) {
-        // CRITICAL: default must be prevented to allow drop
-        e.preventDefault(); 
+        e.preventDefault(); // Required to allow drop
         e.dataTransfer.dropEffect = 'move';
     }
 
     handleDragEnter(e) {
         e.preventDefault();
-        const column = e.target.closest('.kanban-column');
-        if (column && this.draggedTaskEl) {
-            column.classList.add('drag-over');
-        }
+        const col = e.target.closest('.kanban-column');
+        if (col && this.draggedTaskEl) col.classList.add('drag-over');
     }
 
     handleDragLeave(e) {
-        const column = e.target.closest('.kanban-column');
-        // Only remove styling if we are actually leaving the column boundaries
-        if (column && !column.contains(e.relatedTarget)) {
-            column.classList.remove('drag-over');
-        }
+        const col = e.target.closest('.kanban-column');
+        if (col && !col.contains(e.relatedTarget)) col.classList.remove('drag-over');
     }
 
     async handleDrop(e) {
         e.preventDefault();
-        const column = e.target.closest('.kanban-column');
-        
-        if (!column || !this.draggedTaskEl) return;
-        
-        column.classList.remove('drag-over');
-        
-        const taskId = e.dataTransfer.getData('text/plain');
-        const newStatus = column.dataset.status;
-        const task = this.tasks.find(t => t.id === taskId);
+        const col = e.target.closest('.kanban-column');
+        if (!col || !this.draggedTaskEl) return;
 
-        // If the task was dropped into a different column
+        col.classList.remove('drag-over');
+
+        const taskId   = e.dataTransfer.getData('text/plain');
+        const newStatus = col.dataset.status;
+        const task     = this.tasks.find(t => t.id === taskId);
+
         if (task && task.status !== newStatus) {
             const oldStatus = task.status;
-            
-            // Optimistically update UI
             task.status = newStatus;
-            this.render();
-            
-            // Wait for our asynchronous cloud sync
-            await this.syncTaskUpdate(taskId, newStatus);
-            
-            // Save to persistent local storage after cloud sync confirms
+
+            // FIX: persist immediately after optimistic update — not after the async sync
+            // Prevents data loss if the user closes the tab during the 800ms network wait
             this.saveState();
-            
+            this.render();
+
+            await this.syncTaskUpdate(taskId, newStatus);
             this.announceToScreenReader(`Task moved from ${oldStatus} to ${newStatus}`);
         }
     }
 
-    /**
-     * --- STANDARD EVENT HANDLERS & RENDERING ---
-     */
+    // ─────────────────────────────────────────
+    // MODAL HANDLERS
+    // ─────────────────────────────────────────
     openModal() {
         this.taskForm.reset();
+        this.pendingDeleteId = null;
         this.taskModal.showModal();
+        // FIX: auto-focus the title field so keyboard users can start typing immediately
+        document.getElementById('task-title').focus();
         this.announceToScreenReader('New task modal opened');
     }
 
     closeModal() {
         this.taskModal.close();
-        this.addTaskBtn.focus(); 
+        this.addTaskBtn.focus();
         this.announceToScreenReader('New task modal closed');
     }
 
     handleFormSubmit(e) {
         e.preventDefault();
-        const titleInput = document.getElementById('task-title');
-        const title = titleInput.value.trim();
+        const titleInput  = document.getElementById('task-title');
+        const title       = titleInput.value.trim();
         const description = document.getElementById('task-desc').value.trim();
-        const priority = document.getElementById('task-priority').value;
+        const priority    = document.getElementById('task-priority').value;
 
         if (!title) {
             titleInput.focus();
@@ -280,61 +282,85 @@ class KanbanApp {
         this.closeModal();
     }
 
+    // FIX: Inline "Delete? ✓ ✕" confirmation replaces blocking confirm()
     handleBoardClick(e) {
-        const deleteBtn = e.target.closest('.delete-task');
-        if (!deleteBtn) return;
+        const confirmBtn = e.target.closest('.confirm-delete');
+        const cancelBtn  = e.target.closest('.cancel-delete');
+        const deleteBtn  = e.target.closest('.delete-task');
 
-        const taskCard = deleteBtn.closest('.task-card');
-        const taskId = taskCard?.dataset?.id;
-        
-        if (taskId && confirm('Are you sure you want to delete this task?')) {
-            this.deleteTask(taskId);
+        if (cancelBtn) {
+            this.pendingDeleteId = null;
+            this.render();
+            return;
+        }
+
+        if (confirmBtn) {
+            const taskId = confirmBtn.closest('.task-card')?.dataset?.id;
+            if (taskId) this.deleteTask(taskId);
+            return;
+        }
+
+        if (deleteBtn) {
+            const card   = deleteBtn.closest('.task-card');
+            const taskId = card?.dataset?.id;
+            if (!taskId) return;
+
+            this.pendingDeleteId = taskId;
+            this.render();
+
+            // Focus the confirm button after the DOM rebuilds
+            requestAnimationFrame(() => {
+                document.querySelector(`[data-id="${taskId}"] .confirm-delete`)?.focus();
+            });
         }
     }
 
-    toggleTheme() {
-        const currentTheme = this.htmlEl.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        this.htmlEl.setAttribute('data-theme', newTheme);
-        this.announceToScreenReader(`${newTheme} mode enabled`);
-    }
-
-    initTheme() {
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (prefersDark) {
-            this.htmlEl.setAttribute('data-theme', 'dark');
-        }
-    }
-
+    // ─────────────────────────────────────────
+    // RENDERING
+    // FIX: saves & restores keyboard focus across full re-renders
+    // ─────────────────────────────────────────
     render() {
-        Object.values(this.board).forEach(column => column.innerHTML = '');
+        // Snapshot focused task ID before wiping the DOM
+        const focusedTaskId = document.activeElement?.closest('.task-card')?.dataset?.id;
+
+        Object.values(this.board).forEach(col => col.innerHTML = '');
         const counts = { todo: 0, inprogress: 0, done: 0 };
 
         this.tasks.forEach(task => {
-            const targetList = this.board[task.status] || this.board.todo; 
-            targetList.appendChild(this.createTaskElement(task));
+            const target = this.board[task.status] || this.board.todo;
+            target.appendChild(this.createTaskElement(task));
             counts[task.status] = (counts[task.status] || 0) + 1;
         });
 
         Object.entries(counts).forEach(([status, count]) => {
             if (this.counters[status]) {
                 this.counters[status].textContent = count;
-                const statusName = status === 'inprogress' ? 'In Progress' : status === 'todo' ? 'To Do' : 'Done';
-                this.counters[status].setAttribute('aria-label', `${count} tasks in ${statusName}`);
+                const label = status === 'inprogress' ? 'In Progress'
+                            : status === 'todo'       ? 'To Do'
+                            : 'Done';
+                this.counters[status].setAttribute('aria-label', `${count} tasks in ${label}`);
             }
         });
+
+        // FIX: Restore focus to the same card after re-render so keyboard nav isn't disrupted
+        if (focusedTaskId) {
+            const restored = document.querySelector(`[data-id="${focusedTaskId}"]`);
+            restored?.focus({ preventScroll: true });
+        }
     }
 
     createTaskElement(task) {
         const fragment = this.template.content.cloneNode(true);
-        const card = fragment.querySelector('.task-card');
-        
-        card.id = task.id;
-        card.dataset.id = task.id; 
+        const card     = fragment.querySelector('.task-card');
 
-        card.querySelector('.task-title').textContent = task.title;
+        card.id         = task.id;
+        card.dataset.id = task.id;
+
+        card.querySelector('.task-title').textContent       = task.title;
         card.querySelector('.task-description').textContent = task.description;
-        card.querySelector('.task-timestamp').textContent = task.timestamp;
+
+        // FIX: support both new 'createdAt' and old 'timestamp' field for backward compat
+        card.querySelector('.task-timestamp').textContent = task.createdAt || task.timestamp || '';
 
         const badge = card.querySelector('.task-priority-badge');
         if (badge) {
@@ -342,9 +368,23 @@ class KanbanApp {
             badge.setAttribute('aria-label', `Priority: ${task.priority}`);
         }
 
+        // FIX: Replace blocking confirm() with inline confirmation buttons
+        if (this.pendingDeleteId === task.id) {
+            card.querySelector('.task-actions').innerHTML = `
+                <span style="font-size:0.75rem; color:var(--danger); white-space:nowrap;">Delete?</span>
+                <button class="btn-icon confirm-delete" aria-label="Confirm delete" title="Confirm delete"
+                    style="opacity:1; color:var(--danger);">✓</button>
+                <button class="btn-icon cancel-delete" aria-label="Cancel delete" title="Cancel"
+                    style="opacity:1;">✕</button>
+            `;
+        }
+
         return fragment;
     }
 
+    // ─────────────────────────────────────────
+    // ACCESSIBILITY
+    // ─────────────────────────────────────────
     announceToScreenReader(message) {
         if (!this.announcer) return;
         this.announcer.textContent = message;
@@ -352,8 +392,7 @@ class KanbanApp {
     }
 }
 
-// Bootstrap Application
+// Bootstrap
 document.addEventListener('DOMContentLoaded', () => {
     new KanbanApp();
 });
-
