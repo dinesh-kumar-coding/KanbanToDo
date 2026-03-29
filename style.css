@@ -1,47 +1,42 @@
 /* =========================================
-   PHASE 2: CSS ARCHITECTURE & THEMING
+   CSS ARCHITECTURE & THEMING
    ========================================= */
 
 /* --- 1. CSS Custom Properties (Design Tokens) --- */
 :root {
-    /* Color Palette - Light Mode (Default) */
     --bg-main: #f4f5f7;
     --bg-surface: #ffffff;
     --bg-column: #ebecf0;
     --text-primary: #172b4d;
     --text-secondary: #5e6c84;
     --border-color: #dfe1e6;
-    
-    /* Interactive Accents */
+
     --accent-primary: #0052cc;
     --accent-primary-hover: #0065ff;
     --danger: #ef4444;
     --danger-hover: #dc2626;
-    
-    /* Task Priority Colors */
+
     --priority-low: #10b981;
     --priority-medium: #f59e0b;
     --priority-high: #ef4444;
-    
-    /* Typography */
-    --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+
+    --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+        Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     --text-sm: 0.875rem;
     --text-base: 1rem;
     --text-lg: 1.25rem;
     --text-xl: 1.5rem;
-    
-    /* Spacing & Layout */
+
     --space-xs: 0.25rem;
     --space-sm: 0.5rem;
     --space-md: 1rem;
     --space-lg: 1.5rem;
     --space-xl: 2rem;
-    
+
     --radius-sm: 4px;
     --radius-md: 8px;
     --radius-lg: 12px;
-    
-    /* Effects & Transitions */
+
     --shadow-sm: 0 1px 2px rgba(9, 30, 66, 0.25);
     --shadow-md: 0 4px 8px rgba(9, 30, 66, 0.13);
     --shadow-modal: 0 10px 25px rgba(0, 0, 0, 0.2);
@@ -49,7 +44,6 @@
     --transition-normal: 0.3s ease;
 }
 
-/* Dark Mode Theme Overrides */
 [data-theme="dark"] {
     --bg-main: #1d2125;
     --bg-surface: #22272b;
@@ -57,7 +51,7 @@
     --text-primary: #b6c2cf;
     --text-secondary: #8c9bab;
     --border-color: #a6c5e229;
-    
+
     --accent-primary: #579dff;
     --accent-primary-hover: #85b8ff;
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
@@ -71,9 +65,15 @@
     padding: 0;
 }
 
+/*
+ * FIX (Scroll): Lock html + body to the full viewport height on desktop.
+ * This prevents the page itself from ever scrolling — only the task lists
+ * inside each column scroll. Overridden on mobile (see media query below).
+ */
 html {
     font-size: 16px;
     scroll-behavior: smooth;
+    height: 100%;
 }
 
 body {
@@ -84,7 +84,8 @@ body {
     transition: background-color var(--transition-normal), color var(--transition-normal);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    min-height: 100vh;
+    height: 100%;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
 }
@@ -96,11 +97,8 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 600;
 }
 
-p {
-    color: var(--text-secondary);
-}
+p { color: var(--text-secondary); }
 
-/* Inherit font styles for inputs to avoid browser defaults */
 button, input, textarea, select {
     font: inherit;
     color: inherit;
@@ -118,15 +116,12 @@ button:disabled {
     opacity: 0.6;
 }
 
-/* --- 4. Accessibility & Global Utilities --- */
-
-/* Highly visible focus state for keyboard navigation */
+/* --- 4. Accessibility & Utilities --- */
 :focus-visible {
     outline: 2px solid var(--accent-primary);
     outline-offset: 2px;
 }
 
-/* Hide elements visually but keep them available to screen readers */
 .sr-only {
     position: absolute;
     width: 1px;
@@ -139,7 +134,7 @@ button:disabled {
     border-width: 0;
 }
 
-/* Base UI Components */
+/* --- 5. Base UI Components --- */
 .btn-primary {
     background-color: var(--accent-primary);
     color: #ffffff;
@@ -147,10 +142,7 @@ button:disabled {
     border-radius: var(--radius-sm);
     font-weight: 500;
 }
-
-.btn-primary:hover {
-    background-color: var(--accent-primary-hover);
-}
+.btn-primary:hover { background-color: var(--accent-primary-hover); }
 
 .btn-secondary {
     background-color: transparent;
@@ -159,12 +151,8 @@ button:disabled {
     border-radius: var(--radius-sm);
     border: 1px solid var(--border-color);
 }
+.btn-secondary:hover { background-color: var(--bg-column); }
 
-.btn-secondary:hover {
-    background-color: var(--bg-column);
-}
-
-/* Theme Toggle Button Specifics */
 #theme-toggle {
     font-size: 1.5rem;
     padding: var(--space-xs);
@@ -173,21 +161,20 @@ button:disabled {
     align-items: center;
     justify-content: center;
 }
+#theme-toggle:hover { background-color: var(--bg-column); }
 
-#theme-toggle:hover {
-    background-color: var(--bg-column);
-}
 
 /* =========================================
-   PHASE 3: CSS LAYOUTS & ANIMATIONS
+   LAYOUT & COMPONENTS
    ========================================= */
 
-/* --- 1. Macro Layout (Header, Main, Footer) --- */
+/* --- 1. Header --- */
 .app-header {
     background-color: var(--bg-surface);
     border-bottom: 1px solid var(--border-color);
     padding: var(--space-md) var(--space-xl);
     box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
     z-index: 10;
 }
 
@@ -205,6 +192,7 @@ button:disabled {
     gap: var(--space-md);
 }
 
+/* --- 2. Footer --- */
 .app-footer {
     text-align: center;
     padding: var(--space-md);
@@ -212,37 +200,50 @@ button:disabled {
     color: var(--text-secondary);
     border-top: 1px solid var(--border-color);
     background-color: var(--bg-surface);
+    flex-shrink: 0;
 }
 
-/* --- 2. Kanban Board Grid --- */
+/* --- 3. Board Container --- */
 .board-container {
-    flex: 1; /* Pushes footer to the bottom */
+    /*
+     * FIX (Scroll): flex:1 fills the space between header and footer.
+     * min-height:0 overrides flex's default min-height:auto, which was
+     * allowing the container to grow past the viewport and cause page scroll.
+     */
+    flex: 1;
+    min-height: 0;
+
     padding: var(--space-xl);
     display: grid;
-    /* Creates a horizontally scrolling grid for columns */
-    grid-auto-columns: minmax(320px, 1fr);
+    grid-auto-columns: minmax(300px, 1fr);
     grid-auto-flow: column;
     gap: var(--space-xl);
+
     overflow-x: auto;
     overflow-y: hidden;
-    align-items: start; /* Prevents columns from stretching vertically by default */
+    align-items: stretch;
 }
 
-/* --- 3. Column Layout (Flexbox) --- */
+/* --- 4. Kanban Column --- */
 .kanban-column {
     background-color: var(--bg-column);
     border-radius: var(--radius-lg);
     display: flex;
     flex-direction: column;
-    max-height: calc(100vh - 180px); /* Keeps column headers visible while lists scroll */
     border: 2px solid transparent;
     transition: border-color var(--transition-normal);
+
+    /*
+     * FIX (Scroll): Column fills and stays within the board container.
+     * min-height:0 lets it shrink; without it the column overflows regardless.
+     */
+    min-height: 0;
+    overflow: hidden;
 }
 
-/* State class applied via JS when dragging over a column */
 .kanban-column.drag-over {
     border-color: var(--accent-primary);
-    background-color: var(--border-color); /* Slight darken effect */
+    background-color: var(--border-color);
 }
 
 .column-header {
@@ -251,6 +252,7 @@ button:disabled {
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
 }
 
 .column-header h2 {
@@ -269,15 +271,32 @@ button:disabled {
 
 .task-list {
     padding: var(--space-md);
+    /*
+     * FIX (Scroll): flex:1 + min-height:0 makes the task list fill the
+     * remaining column height and scroll only within itself.
+     * The page never scrolls because the column is already height-constrained.
+     */
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
-    min-height: 50px; /* Ensures empty columns are still droppable targets */
+
+    /* Thin, unobtrusive scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
 }
 
-/* --- 4. Task Card Layout --- */
+.task-list::-webkit-scrollbar { width: 4px; }
+.task-list::-webkit-scrollbar-track { background: transparent; }
+.task-list::-webkit-scrollbar-thumb {
+    background-color: var(--border-color);
+    border-radius: 4px;
+}
+
+/* --- 5. Task Card --- */
 .task-card {
     background-color: var(--bg-surface);
     border-radius: var(--radius-md);
@@ -290,18 +309,16 @@ button:disabled {
     border: 1px solid var(--border-color);
     transition: transform var(--transition-fast), box-shadow var(--transition-fast);
     position: relative;
+    flex-shrink: 0;
+    scroll-margin-top: var(--space-md);
 }
 
 .task-card:hover {
     box-shadow: var(--shadow-md);
     transform: translateY(-2px);
 }
+.task-card:active { cursor: grabbing; }
 
-.task-card:active {
-    cursor: grabbing;
-}
-
-/* State class applied via JS when a card is being dragged */
 .task-card.is-dragging {
     opacity: 0.4;
     transform: scale(0.95);
@@ -321,10 +338,9 @@ button:disabled {
     display: inline-block;
 }
 
-/* Priority Color Modifiers */
-.priority-low { background-color: var(--priority-low); }
+.priority-low    { background-color: var(--priority-low); }
 .priority-medium { background-color: var(--priority-medium); }
-.priority-high { background-color: var(--priority-high); }
+.priority-high   { background-color: var(--priority-high); }
 
 .task-title {
     font-size: var(--text-base);
@@ -335,7 +351,7 @@ button:disabled {
 .task-description {
     font-size: var(--text-sm);
     display: -webkit-box;
-    -webkit-line-clamp: 2; /* Truncates long descriptions after 2 lines */
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -353,56 +369,64 @@ button:disabled {
 
 .btn-icon {
     font-size: 1rem;
-    opacity: 0; /* Hidden by default, shown on card hover */
+    opacity: 0;
     padding: 2px;
 }
 
 .task-card:hover .btn-icon,
-.task-card:focus-within .btn-icon {
-    opacity: 1; /* Accessibility: visible on hover or keyboard focus */
-}
+.task-card:focus-within .btn-icon { opacity: 1; }
 
-.delete-task:hover {
-    color: var(--danger);
-}
+.delete-task:hover { color: var(--danger); }
 
-/* --- 5. Modal & Form Styles (Native Dialog) --- */
+/* --- 6. Modal (Native <dialog>) --- */
 #task-modal {
-    margin: auto;
-    padding: 0;
+    width: 100vw;
+    height: 100dvh;
+    max-width: 100vw;
+    max-height: 100dvh;
+    background: transparent;
     border: none;
-    border-radius: var(--radius-lg);
-    background-color: var(--bg-surface);
-    box-shadow: var(--shadow-modal);
-    width: 100%;
-    max-width: 500px;
+    padding: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
 }
 
-/* The native backdrop for <dialog> elements */
-#task-modal::backdrop {
-    background-color: rgba(9, 30, 66, 0.54);
-    backdrop-filter: blur(3px); /* Modern blur effect */
-}
-
-/* Animation for the modal opening */
 #task-modal[open] {
+    display: flex;
     animation: modalSlideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
-@keyframes modalSlideUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px) scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
+#modal-backdrop {
+    position: fixed;
+    inset: 0;
+    cursor: default;
+    z-index: 0;
+}
+
+#task-modal::backdrop {
+    background-color: rgba(9, 30, 66, 0.54);
+    backdrop-filter: blur(3px);
 }
 
 .modal-content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 500px;
+    background-color: var(--bg-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-modal);
     display: flex;
     flex-direction: column;
+    /* Scrolls internally on very short screens (landscape mobile) */
+    max-height: 90dvh;
+    overflow-y: auto;
+}
+
+@keyframes modalSlideUp {
+    from { opacity: 0; transform: translateY(30px) scale(0.95); }
+    to   { opacity: 1; transform: translateY(0)   scale(1); }
 }
 
 .modal-header {
@@ -411,6 +435,7 @@ button:disabled {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-shrink: 0;
 }
 
 #close-modal-btn {
@@ -424,7 +449,6 @@ button:disabled {
     align-items: center;
     justify-content: center;
 }
-
 #close-modal-btn:hover {
     background-color: var(--bg-column);
     color: var(--text-primary);
@@ -449,9 +473,7 @@ button:disabled {
     color: var(--text-primary);
 }
 
-.form-group .required {
-    color: var(--danger);
-}
+.form-group .required { color: var(--danger); }
 
 .form-group input,
 .form-group textarea,
@@ -477,4 +499,145 @@ button:disabled {
     display: flex;
     justify-content: flex-end;
     gap: var(--space-md);
+}
+
+/* --- 7. Cloud Sync Indicator --- */
+#cloud-sync-indicator {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: var(--accent-primary);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 50px;
+    box-shadow: var(--shadow-md);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: var(--text-sm);
+    font-weight: 500;
+    animation: modalSlideUp 0.3s ease forwards;
+}
+#cloud-sync-indicator.synced { background-color: var(--priority-low); }
+
+/* --- 8. Reduced Motion --- */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+
+/* =========================================
+   RESPONSIVENESS
+   ========================================= */
+
+/* --- Tablet (≤ 1024px): tighten spacing --- */
+@media (max-width: 1024px) {
+    .board-container {
+        padding: var(--space-lg);
+        gap: var(--space-lg);
+        grid-auto-columns: minmax(260px, 1fr);
+    }
+
+    .app-header {
+        padding: var(--space-md) var(--space-lg);
+    }
+}
+
+/* --- Mobile (≤ 768px): stack columns, restore natural page scroll --- */
+@media (max-width: 768px) {
+    /*
+     * Re-enable page scroll on mobile.
+     * Stacked columns grow with their content so viewport-height locking
+     * is not needed — users expect to scroll vertically on mobile.
+     */
+    html,
+    body {
+        height: auto;
+        overflow: visible;
+    }
+
+    body {
+        overflow-x: hidden;
+    }
+
+    .app-header {
+        padding: var(--space-sm) var(--space-md);
+        position: sticky;
+        top: 0;
+        z-index: 20;
+    }
+
+    .header-content h1 {
+        font-size: var(--text-lg);
+    }
+
+    /* Switch from horizontal grid to vertical flex stack */
+    .board-container {
+        display: flex;
+        flex-direction: column;
+        padding: var(--space-md);
+        gap: var(--space-md);
+        overflow: visible;
+        min-height: unset;
+        align-items: unset;
+    }
+
+    /* Full-width columns that grow with their content */
+    .kanban-column {
+        width: 100%;
+        min-height: unset;
+        overflow: visible;
+    }
+
+    /* Task list expands fully; page scroll handles navigation */
+    .task-list {
+        overflow: visible;
+        max-height: none;
+        min-height: 50px;
+    }
+
+    /* Modal is nearly full-width on mobile */
+    .modal-content {
+        max-width: calc(100vw - 2rem);
+        max-height: 92dvh;
+    }
+
+    /* Stack modal action buttons vertically */
+    .modal-actions {
+        flex-direction: column-reverse;
+        gap: var(--space-sm);
+    }
+
+    .modal-actions button {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* --- Small mobile (≤ 480px): tighten further --- */
+@media (max-width: 480px) {
+    .app-header {
+        padding: var(--space-sm);
+    }
+
+    .header-content h1 {
+        font-size: var(--text-base);
+    }
+
+    .board-container {
+        padding: var(--space-sm);
+    }
+
+    .task-card {
+        padding: var(--space-sm);
+    }
+
+    /* Always show action buttons on touch — no hover state on mobile */
+    .btn-icon {
+        opacity: 1;
+    }
 }
