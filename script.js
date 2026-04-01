@@ -46,7 +46,7 @@ class KanbanApp {
         this.taskModal       = document.getElementById('task-modal');
         this.modalBackdrop   = document.getElementById('modal-backdrop');
         this.closeModalBtn   = document.getElementById('close-modal-btn');
-        this.cancelTaskBtn   = document.getElementById('cancel-task-btn');
+        // this.cancelTaskBtn   = document.getElementById('cancel-task-btn');
         this.taskForm        = document.getElementById('task-form');
 
         return this.template && this.taskModal && this.board.todo;
@@ -59,7 +59,7 @@ class KanbanApp {
         this.themeToggleBtn.addEventListener('click', () => this.toggleTheme());
         this.addTaskBtn.addEventListener('click', () => this.openModal());
         this.closeModalBtn.addEventListener('click', () => this.closeModal());
-        this.cancelTaskBtn.addEventListener('click', () => this.closeModal());
+        // this.cancelTaskBtn.addEventListener('click', () => this.closeModal());
 
         // FIX: Reliable click-outside via dedicated backdrop element (replaces getBoundingClientRect hack)
         this.modalBackdrop.addEventListener('click', () => this.closeModal());
@@ -285,14 +285,14 @@ class KanbanApp {
     // FIX: Inline "Delete? ✓ ✕" confirmation replaces blocking confirm()
     handleBoardClick(e) {
         const confirmBtn = e.target.closest('.confirm-delete');
-        const cancelBtn  = e.target.closest('.cancel-delete');
+        // const cancelBtn  = e.target.closest('.cancel-delete');
         const deleteBtn  = e.target.closest('.delete-task');
 
-        if (cancelBtn) {
-            this.pendingDeleteId = null;
-            this.render();
-            return;
-        }
+        // if (cancelBtn) {
+        //     this.pendingDeleteId = null;
+        //     this.render();
+        //     return;
+        // }
 
         if (confirmBtn) {
             const taskId = confirmBtn.closest('.task-card')?.dataset?.id;
@@ -374,8 +374,8 @@ class KanbanApp {
                 <span style="font-size:0.75rem; color:var(--danger); white-space:nowrap;">Delete?</span>
                 <button class="btn-icon confirm-delete" aria-label="Confirm delete" title="Confirm delete"
                     style="opacity:1; color:var(--danger);">✓</button>
-                <button class="btn-icon cancel-delete" aria-label="Cancel delete" title="Cancel"
-                    style="opacity:1;">✕</button>
+                // <button class="btn-icon cancel-delete" aria-label="Cancel delete" title="Cancel"
+                //     style="opacity:1;">✕</button>
             `;
         }
 
